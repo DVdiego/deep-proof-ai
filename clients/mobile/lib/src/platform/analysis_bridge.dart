@@ -18,6 +18,13 @@ class AnalysisBridge {
       result ??
           const <String, dynamic>{
             'ok': false,
+            'rawScore': 0.0,
+            'aiProbability': 0.0,
+            'decisionCode': '',
+            'decisionLabel': '',
+            'explanation': '',
+            'modelVersion': '',
+            'schemaVersion': '',
             'errorCode': 'BRIDGE_EMPTY_RESPONSE',
             'errorMessage': 'Native bridge returned no data.',
           },
