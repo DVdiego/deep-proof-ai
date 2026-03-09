@@ -7,7 +7,15 @@ class ExecuteHistoryRepository {
 
   final HistoryStore store;
 
-  Future<void> add(ExecuteHistoryEntry entry) => store.appendExecute(entry);
+  Future<void> add(ExecuteHistoryEntry entry) async {
+    if (entry.canReuse) {
+      final existing = await findLatestReusableByFingerprint(entry.analysisFingerprint);
+      if (existing != null) {
+        return;
+      }
+    }
+    await store.appendExecute(entry);
+  }
 
   Future<ExecuteHistoryEntry?> findLatestReusableByFingerprint(String fingerprint) async {
     final entries = await store.readExecuteEntries();

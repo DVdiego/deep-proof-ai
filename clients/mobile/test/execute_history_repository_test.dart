@@ -49,13 +49,13 @@ void main() {
   }
 
   test('listVisibleEntries keeps the latest entry for the same fingerprint', () async {
-    await repository.add(buildEntry(
+    await store.appendExecute(buildEntry(
       id: 'one',
       fingerprint: 'same-fingerprint',
       timestamp: DateTime.utc(2026, 3, 9, 9, 0),
       probability: 91,
     ));
-    await repository.add(buildEntry(
+    await store.appendExecute(buildEntry(
       id: 'two',
       fingerprint: 'same-fingerprint',
       timestamp: DateTime.utc(2026, 3, 9, 10, 0),
@@ -70,19 +70,19 @@ void main() {
   });
 
   test('findLatestReusableByFingerprint returns the latest cached entry', () async {
-    await repository.add(buildEntry(
+    await store.appendExecute(buildEntry(
       id: 'one',
       fingerprint: 'fingerprint-a',
       timestamp: DateTime.utc(2026, 3, 9, 9, 0),
       probability: 81.2,
     ));
-    await repository.add(buildEntry(
+    await store.appendExecute(buildEntry(
       id: 'two',
       fingerprint: 'fingerprint-b',
       timestamp: DateTime.utc(2026, 3, 9, 9, 30),
       probability: 52,
     ));
-    await repository.add(buildEntry(
+    await store.appendExecute(buildEntry(
       id: 'three',
       fingerprint: 'fingerprint-a',
       timestamp: DateTime.utc(2026, 3, 9, 10, 0),
@@ -94,5 +94,25 @@ void main() {
     expect(cached, isNotNull);
     expect(cached!.entryId, 'three');
     expect(cached.aiProbability, 88);
+  });
+
+  test('add ignores a new execute entry when the fingerprint already exists', () async {
+    await repository.add(buildEntry(
+      id: 'one',
+      fingerprint: 'same-fingerprint',
+      timestamp: DateTime.utc(2026, 3, 9, 9, 0),
+      probability: 91,
+    ));
+
+    await repository.add(buildEntry(
+      id: 'two',
+      fingerprint: 'same-fingerprint',
+      timestamp: DateTime.utc(2026, 3, 9, 10, 0),
+      probability: 93,
+    ));
+
+    final raw = await store.readExecuteEntries();
+    expect(raw, hasLength(1));
+    expect(raw.single.entryId, 'one');
   });
 }
