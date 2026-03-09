@@ -21,14 +21,22 @@ class ExecuteHistoryEntry extends HistoryEntry {
     required super.timestamp,
     required super.schemaVersion,
     required this.filePath,
+    required this.analysisFingerprint,
+    required this.decisionCode,
     required this.decisionLabel,
     required this.aiProbability,
+    required this.rawScore,
+    required this.explanation,
     required this.modelVersion,
   });
 
   final String filePath;
+  final String analysisFingerprint;
+  final String decisionCode;
   final String decisionLabel;
   final double aiProbability;
+  final double rawScore;
+  final String explanation;
   final String modelVersion;
 
   factory ExecuteHistoryEntry.fromJson(Map<String, dynamic> json) {
@@ -38,11 +46,17 @@ class ExecuteHistoryEntry extends HistoryEntry {
       timestamp: DateTime.parse(json['timestamp'] as String),
       schemaVersion: json['schema_version'] as String,
       filePath: json['file_path'] as String,
+      analysisFingerprint: json['analysis_fingerprint'] as String? ?? '',
+      decisionCode: json['decision_code'] as String? ?? '',
       decisionLabel: json['decision_label'] as String,
       aiProbability: (json['ai_probability'] as num).toDouble(),
+      rawScore: (json['raw_score'] as num?)?.toDouble() ?? 0,
+      explanation: json['explanation'] as String? ?? '',
       modelVersion: json['model_version'] as String,
     );
   }
+
+  bool get canReuse => analysisFingerprint.isNotEmpty;
 
   @override
   Map<String, dynamic> toJson() {
@@ -52,8 +66,12 @@ class ExecuteHistoryEntry extends HistoryEntry {
       'file_name': fileName,
       'file_path': filePath,
       'timestamp': timestamp.toUtc().toIso8601String(),
+      'analysis_fingerprint': analysisFingerprint,
+      'decision_code': decisionCode,
       'decision_label': decisionLabel,
       'ai_probability': aiProbability,
+      'raw_score': rawScore,
+      'explanation': explanation,
       'model_version': modelVersion,
       'schema_version': schemaVersion,
     };
