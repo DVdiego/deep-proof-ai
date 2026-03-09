@@ -20,8 +20,15 @@ class HistoryStore {
     await _appendLine(compareHistoryFile, entry.toJson());
   }
 
-  Future<List<Map<String, dynamic>>> readExecuteEntries() => _readJsonLines(executeHistoryFile);
-  Future<List<Map<String, dynamic>>> readCompareEntries() => _readJsonLines(compareHistoryFile);
+  Future<List<ExecuteHistoryEntry>> readExecuteEntries() async {
+    final payload = await _readJsonLines(executeHistoryFile);
+    return payload.map(ExecuteHistoryEntry.fromJson).toList(growable: false);
+  }
+
+  Future<List<CompareHistoryEntry>> readCompareEntries() async {
+    final payload = await _readJsonLines(compareHistoryFile);
+    return payload.map(CompareHistoryEntry.fromJson).toList(growable: false);
+  }
 
   Future<void> _appendLine(File file, Map<String, dynamic> payload) async {
     await file.parent.create(recursive: true);

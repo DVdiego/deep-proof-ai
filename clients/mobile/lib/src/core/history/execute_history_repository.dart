@@ -9,7 +9,7 @@ class ExecuteHistoryRepository {
 
   Future<void> add(ExecuteHistoryEntry entry) => store.appendExecute(entry);
 
-  Future<List<Map<String, dynamic>>> listVisibleEntries(EntitlementTier tier) async {
+  Future<List<ExecuteHistoryEntry>> listVisibleEntries(EntitlementTier tier) async {
     final entries = await store.readExecuteEntries();
     if (tier == EntitlementTier.free && entries.length > 10) {
       return entries.sublist(entries.length - 10);

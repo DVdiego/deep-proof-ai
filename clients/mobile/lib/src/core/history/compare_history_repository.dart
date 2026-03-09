@@ -9,7 +9,7 @@ class CompareHistoryRepository {
 
   Future<void> add(CompareHistoryEntry entry) => store.appendCompare(entry);
 
-  Future<List<Map<String, dynamic>>> listVisibleEntries(EntitlementTier tier) async {
+  Future<List<CompareHistoryEntry>> listVisibleEntries(EntitlementTier tier) async {
     if (tier == EntitlementTier.free) {
       return const [];
     }

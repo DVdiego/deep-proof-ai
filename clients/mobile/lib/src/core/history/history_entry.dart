@@ -31,6 +31,19 @@ class ExecuteHistoryEntry extends HistoryEntry {
   final double aiProbability;
   final String modelVersion;
 
+  factory ExecuteHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return ExecuteHistoryEntry(
+      entryId: json['entry_id'] as String,
+      fileName: json['file_name'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      schemaVersion: json['schema_version'] as String,
+      filePath: json['file_path'] as String,
+      decisionLabel: json['decision_label'] as String,
+      aiProbability: (json['ai_probability'] as num).toDouble(),
+      modelVersion: json['model_version'] as String,
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -65,6 +78,20 @@ class CompareHistoryEntry extends HistoryEntry {
   final double primaryProbability;
   final double secondaryProbability;
   final double deltaProbability;
+
+  factory CompareHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return CompareHistoryEntry(
+      entryId: json['entry_id'] as String,
+      fileName: json['file_name'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      schemaVersion: json['schema_version'] as String,
+      primaryModelVersion: json['primary_model_version'] as String,
+      secondaryModelVersion: json['secondary_model_version'] as String,
+      primaryProbability: (json['primary_probability'] as num).toDouble(),
+      secondaryProbability: (json['secondary_probability'] as num).toDouble(),
+      deltaProbability: (json['delta_probability'] as num).toDouble(),
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() {
