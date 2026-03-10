@@ -78,51 +78,142 @@ class ExecuteHistoryEntry extends HistoryEntry {
   }
 }
 
-class CompareHistoryEntry extends HistoryEntry {
-  const CompareHistoryEntry({
+class ReportHistoryEntry extends HistoryEntry {
+  const ReportHistoryEntry({
     required super.entryId,
     required super.fileName,
     required super.timestamp,
     required super.schemaVersion,
-    required this.primaryModelVersion,
-    required this.secondaryModelVersion,
-    required this.primaryProbability,
-    required this.secondaryProbability,
-    required this.deltaProbability,
+    required this.filePath,
+    required this.analysisFingerprint,
+    required this.reportImagePath,
+    required this.decisionLabel,
+    required this.aiProbability,
+    required this.engineName,
+    required this.engineVersion,
+    required this.engineSignature,
   });
 
-  final String primaryModelVersion;
-  final String secondaryModelVersion;
-  final double primaryProbability;
-  final double secondaryProbability;
-  final double deltaProbability;
+  final String filePath;
+  final String analysisFingerprint;
+  final String reportImagePath;
+  final String decisionLabel;
+  final double aiProbability;
+  final String engineName;
+  final String engineVersion;
+  final String engineSignature;
 
-  factory CompareHistoryEntry.fromJson(Map<String, dynamic> json) {
-    return CompareHistoryEntry(
+  factory ReportHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return ReportHistoryEntry(
       entryId: json['entry_id'] as String,
       fileName: json['file_name'] as String,
       timestamp: DateTime.parse(json['timestamp'] as String),
       schemaVersion: json['schema_version'] as String,
-      primaryModelVersion: json['primary_model_version'] as String,
-      secondaryModelVersion: json['secondary_model_version'] as String,
-      primaryProbability: (json['primary_probability'] as num).toDouble(),
-      secondaryProbability: (json['secondary_probability'] as num).toDouble(),
-      deltaProbability: (json['delta_probability'] as num).toDouble(),
+      filePath: json['file_path'] as String,
+      analysisFingerprint: json['analysis_fingerprint'] as String? ?? '',
+      reportImagePath: json['report_image_path'] as String,
+      decisionLabel: json['decision_label'] as String,
+      aiProbability: (json['ai_probability'] as num).toDouble(),
+      engineName: json['engine_name'] as String,
+      engineVersion: json['engine_version'] as String,
+      engineSignature: json['engine_signature'] as String,
     );
   }
 
   @override
   Map<String, dynamic> toJson() {
     return {
-      'entry_type': 'compare',
+      'entry_type': 'report',
       'entry_id': entryId,
       'file_name': fileName,
+      'file_path': filePath,
+      'analysis_fingerprint': analysisFingerprint,
+      'report_image_path': reportImagePath,
       'timestamp': timestamp.toUtc().toIso8601String(),
-      'primary_model_version': primaryModelVersion,
-      'secondary_model_version': secondaryModelVersion,
-      'primary_probability': primaryProbability,
-      'secondary_probability': secondaryProbability,
-      'delta_probability': deltaProbability,
+      'decision_label': decisionLabel,
+      'ai_probability': aiProbability,
+      'engine_name': engineName,
+      'engine_version': engineVersion,
+      'engine_signature': engineSignature,
+      'schema_version': schemaVersion,
+    };
+  }
+}
+
+class ReportQueueEntry extends HistoryEntry {
+  const ReportQueueEntry({
+    required super.entryId,
+    required super.fileName,
+    required super.timestamp,
+    required super.schemaVersion,
+    required this.filePath,
+    required this.analysisFingerprint,
+    required this.reportImagePath,
+    required this.decisionLabel,
+    required this.aiProbability,
+    required this.engineName,
+    required this.engineVersion,
+    required this.engineSignature,
+  });
+
+  final String filePath;
+  final String analysisFingerprint;
+  final String reportImagePath;
+  final String decisionLabel;
+  final double aiProbability;
+  final String engineName;
+  final String engineVersion;
+  final String engineSignature;
+
+  factory ReportQueueEntry.fromJson(Map<String, dynamic> json) {
+    return ReportQueueEntry(
+      entryId: json['entry_id'] as String,
+      fileName: json['file_name'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      schemaVersion: json['schema_version'] as String,
+      filePath: json['file_path'] as String,
+      analysisFingerprint: json['analysis_fingerprint'] as String? ?? '',
+      reportImagePath: json['report_image_path'] as String,
+      decisionLabel: json['decision_label'] as String,
+      aiProbability: (json['ai_probability'] as num).toDouble(),
+      engineName: json['engine_name'] as String,
+      engineVersion: json['engine_version'] as String,
+      engineSignature: json['engine_signature'] as String,
+    );
+  }
+
+  factory ReportQueueEntry.fromReport(ReportHistoryEntry report) {
+    return ReportQueueEntry(
+      entryId: report.entryId,
+      fileName: report.fileName,
+      timestamp: DateTime.now().toUtc(),
+      schemaVersion: report.schemaVersion,
+      filePath: report.filePath,
+      analysisFingerprint: report.analysisFingerprint,
+      reportImagePath: report.reportImagePath,
+      decisionLabel: report.decisionLabel,
+      aiProbability: report.aiProbability,
+      engineName: report.engineName,
+      engineVersion: report.engineVersion,
+      engineSignature: report.engineSignature,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'entry_type': 'report_queue',
+      'entry_id': entryId,
+      'file_name': fileName,
+      'file_path': filePath,
+      'analysis_fingerprint': analysisFingerprint,
+      'report_image_path': reportImagePath,
+      'timestamp': timestamp.toUtc().toIso8601String(),
+      'decision_label': decisionLabel,
+      'ai_probability': aiProbability,
+      'engine_name': engineName,
+      'engine_version': engineVersion,
+      'engine_signature': engineSignature,
       'schema_version': schemaVersion,
     };
   }

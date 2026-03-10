@@ -15,7 +15,8 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('execute_history_repo_test');
     store = HistoryStore(
       executeHistoryFile: File('${tempDir.path}/execute.jsonl'),
-      compareHistoryFile: File('${tempDir.path}/compare.jsonl'),
+      reportHistoryFile: File('${tempDir.path}/report.jsonl'),
+      reportQueueFile: File('${tempDir.path}/queue.jsonl'),
     );
     repository = ExecuteHistoryRepository(store: store);
   });

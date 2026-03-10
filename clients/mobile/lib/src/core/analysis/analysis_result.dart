@@ -3,6 +3,7 @@ class AnalysisResult {
     required this.ok,
     required this.rawScore,
     required this.aiProbability,
+    required this.analysisFingerprint,
     required this.decisionCode,
     required this.decisionLabel,
     required this.explanation,
@@ -16,6 +17,7 @@ class AnalysisResult {
   final bool ok;
   final double rawScore;
   final double aiProbability;
+  final String analysisFingerprint;
   final String decisionCode;
   final String decisionLabel;
   final String explanation;
@@ -32,6 +34,8 @@ class AnalysisResult {
       ok: json['ok'] as bool? ?? false,
       rawScore: rawScore.toDouble(),
       aiProbability: aiProbability.toDouble(),
+      analysisFingerprint:
+          json['analysisFingerprint'] as String? ?? json['analysis_fingerprint'] as String? ?? '',
       decisionCode: json['decisionCode'] as String? ?? json['decision_code'] as String? ?? '',
       decisionLabel: json['decisionLabel'] as String? ?? json['decision_label'] as String? ?? '',
       explanation: json['explanation'] as String? ?? '',

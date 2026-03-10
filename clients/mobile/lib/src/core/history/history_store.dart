@@ -6,18 +6,24 @@ import 'history_entry.dart';
 class HistoryStore {
   HistoryStore({
     required this.executeHistoryFile,
-    required this.compareHistoryFile,
+    required this.reportHistoryFile,
+    required this.reportQueueFile,
   });
 
   final File executeHistoryFile;
-  final File compareHistoryFile;
+  final File reportHistoryFile;
+  final File reportQueueFile;
 
   Future<void> appendExecute(ExecuteHistoryEntry entry) async {
     await _appendLine(executeHistoryFile, entry.toJson());
   }
 
-  Future<void> appendCompare(CompareHistoryEntry entry) async {
-    await _appendLine(compareHistoryFile, entry.toJson());
+  Future<void> appendReport(ReportHistoryEntry entry) async {
+    await _appendLine(reportHistoryFile, entry.toJson());
+  }
+
+  Future<void> appendQueuedReport(ReportQueueEntry entry) async {
+    await _appendLine(reportQueueFile, entry.toJson());
   }
 
   Future<List<ExecuteHistoryEntry>> readExecuteEntries() async {
@@ -25,9 +31,24 @@ class HistoryStore {
     return payload.map(ExecuteHistoryEntry.fromJson).toList(growable: false);
   }
 
-  Future<List<CompareHistoryEntry>> readCompareEntries() async {
-    final payload = await _readJsonLines(compareHistoryFile);
-    return payload.map(CompareHistoryEntry.fromJson).toList(growable: false);
+  Future<List<ReportHistoryEntry>> readReportEntries() async {
+    final payload = await _readJsonLines(reportHistoryFile);
+    return payload.map(ReportHistoryEntry.fromJson).toList(growable: false);
+  }
+
+  Future<List<ReportQueueEntry>> readQueuedReportEntries() async {
+    final payload = await _readJsonLines(reportQueueFile);
+    return payload.map(ReportQueueEntry.fromJson).toList(growable: false);
+  }
+
+  Future<void> writeQueuedReportEntries(List<ReportQueueEntry> entries) async {
+    await reportQueueFile.parent.create(recursive: true);
+    final sink = reportQueueFile.openWrite(mode: FileMode.writeOnly);
+    for (final entry in entries) {
+      sink.writeln(jsonEncode(entry.toJson()));
+    }
+    await sink.flush();
+    await sink.close();
   }
 
   Future<void> _appendLine(File file, Map<String, dynamic> payload) async {
