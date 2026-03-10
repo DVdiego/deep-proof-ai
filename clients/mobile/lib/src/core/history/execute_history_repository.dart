@@ -36,6 +36,16 @@ class ExecuteHistoryRepository {
     return deduped;
   }
 
+  Future<void> remove(ExecuteHistoryEntry entry) async {
+    final entries = await store.readExecuteEntries();
+    final filtered = entries.where((item) => item.entryId != entry.entryId).toList(growable: false);
+    await store.writeExecuteEntries(filtered);
+  }
+
+  Future<void> clearAll() async {
+    await store.writeExecuteEntries(const <ExecuteHistoryEntry>[]);
+  }
+
   List<ExecuteHistoryEntry> _dedupeByFingerprint(List<ExecuteHistoryEntry> entries) {
     final seen = <String>{};
     final dedupedReversed = <ExecuteHistoryEntry>[];

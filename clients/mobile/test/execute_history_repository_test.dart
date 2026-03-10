@@ -12,11 +12,15 @@ void main() {
   late ExecuteHistoryRepository repository;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('execute_history_repo_test');
+    tempDir = await Directory.systemTemp.createTemp(
+      'execute_history_repo_test',
+    );
     store = HistoryStore(
       executeHistoryFile: File('${tempDir.path}/execute.jsonl'),
       reportHistoryFile: File('${tempDir.path}/report.jsonl'),
       reportQueueFile: File('${tempDir.path}/queue.jsonl'),
+      reviewBatchFile: File('${tempDir.path}/batch.jsonl'),
+      reviewBatchItemFile: File('${tempDir.path}/batch_item.jsonl'),
     );
     repository = ExecuteHistoryRepository(store: store);
   });
@@ -49,71 +53,98 @@ void main() {
     );
   }
 
-  test('listVisibleEntries keeps the latest entry for the same fingerprint', () async {
-    await store.appendExecute(buildEntry(
-      id: 'one',
-      fingerprint: 'same-fingerprint',
-      timestamp: DateTime.utc(2026, 3, 9, 9, 0),
-      probability: 91,
-    ));
-    await store.appendExecute(buildEntry(
-      id: 'two',
-      fingerprint: 'same-fingerprint',
-      timestamp: DateTime.utc(2026, 3, 9, 10, 0),
-      probability: 93,
-    ));
+  test(
+    'listVisibleEntries keeps the latest entry for the same fingerprint',
+    () async {
+      await store.appendExecute(
+        buildEntry(
+          id: 'one',
+          fingerprint: 'same-fingerprint',
+          timestamp: DateTime.utc(2026, 3, 9, 9, 0),
+          probability: 91,
+        ),
+      );
+      await store.appendExecute(
+        buildEntry(
+          id: 'two',
+          fingerprint: 'same-fingerprint',
+          timestamp: DateTime.utc(2026, 3, 9, 10, 0),
+          probability: 93,
+        ),
+      );
 
-    final visible = await repository.listVisibleEntries(EntitlementTier.professional);
+      final visible = await repository.listVisibleEntries(
+        EntitlementTier.professional,
+      );
 
-    expect(visible, hasLength(1));
-    expect(visible.single.entryId, 'two');
-    expect(visible.single.aiProbability, 93);
-  });
+      expect(visible, hasLength(1));
+      expect(visible.single.entryId, 'two');
+      expect(visible.single.aiProbability, 93);
+    },
+  );
 
-  test('findLatestReusableByFingerprint returns the latest cached entry', () async {
-    await store.appendExecute(buildEntry(
-      id: 'one',
-      fingerprint: 'fingerprint-a',
-      timestamp: DateTime.utc(2026, 3, 9, 9, 0),
-      probability: 81.2,
-    ));
-    await store.appendExecute(buildEntry(
-      id: 'two',
-      fingerprint: 'fingerprint-b',
-      timestamp: DateTime.utc(2026, 3, 9, 9, 30),
-      probability: 52,
-    ));
-    await store.appendExecute(buildEntry(
-      id: 'three',
-      fingerprint: 'fingerprint-a',
-      timestamp: DateTime.utc(2026, 3, 9, 10, 0),
-      probability: 88,
-    ));
+  test(
+    'findLatestReusableByFingerprint returns the latest cached entry',
+    () async {
+      await store.appendExecute(
+        buildEntry(
+          id: 'one',
+          fingerprint: 'fingerprint-a',
+          timestamp: DateTime.utc(2026, 3, 9, 9, 0),
+          probability: 81.2,
+        ),
+      );
+      await store.appendExecute(
+        buildEntry(
+          id: 'two',
+          fingerprint: 'fingerprint-b',
+          timestamp: DateTime.utc(2026, 3, 9, 9, 30),
+          probability: 52,
+        ),
+      );
+      await store.appendExecute(
+        buildEntry(
+          id: 'three',
+          fingerprint: 'fingerprint-a',
+          timestamp: DateTime.utc(2026, 3, 9, 10, 0),
+          probability: 88,
+        ),
+      );
 
-    final cached = await repository.findLatestReusableByFingerprint('fingerprint-a');
+      final cached = await repository.findLatestReusableByFingerprint(
+        'fingerprint-a',
+      );
 
-    expect(cached, isNotNull);
-    expect(cached!.entryId, 'three');
-    expect(cached.aiProbability, 88);
-  });
+      expect(cached, isNotNull);
+      expect(cached!.entryId, 'three');
+      expect(cached.aiProbability, 88);
+    },
+  );
 
-  test('add ignores a new execute entry when the fingerprint already exists', () async {
-    await repository.add(buildEntry(
-      id: 'one',
-      fingerprint: 'same-fingerprint',
-      timestamp: DateTime.utc(2026, 3, 9, 9, 0),
-      probability: 91,
-    ));
+  test(
+    'add ignores a new execute entry when the fingerprint already exists',
+    () async {
+      await repository.add(
+        buildEntry(
+          id: 'one',
+          fingerprint: 'same-fingerprint',
+          timestamp: DateTime.utc(2026, 3, 9, 9, 0),
+          probability: 91,
+        ),
+      );
 
-    await repository.add(buildEntry(
-      id: 'two',
-      fingerprint: 'same-fingerprint',
-      timestamp: DateTime.utc(2026, 3, 9, 10, 0),
-      probability: 93,
-    ));
+      await repository.add(
+        buildEntry(
+          id: 'two',
+          fingerprint: 'same-fingerprint',
+          timestamp: DateTime.utc(2026, 3, 9, 10, 0),
+          probability: 93,
+        ),
+      );
 
-    final raw = await store.readExecuteEntries();
-    expect(raw, hasLength(1));
-    expect(raw.single.entryId, 'one');
-  });
+      final raw = await store.readExecuteEntries();
+      expect(raw, hasLength(1));
+      expect(raw.single.entryId, 'one');
+    },
+  );
 }

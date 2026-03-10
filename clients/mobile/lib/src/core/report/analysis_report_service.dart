@@ -8,10 +8,7 @@ import '../analysis/analysis_result.dart';
 import '../model_package/model_package.dart';
 
 class GeneratedReport {
-  const GeneratedReport({
-    required this.path,
-    required this.fileName,
-  });
+  const GeneratedReport({required this.path, required this.fileName});
 
   final String path;
   final String fileName;
@@ -20,14 +17,20 @@ class GeneratedReport {
 class AnalysisReportService {
   const AnalysisReportService();
 
+  static const double _reportWidth = 1280.0;
+  static const double _reportSidePadding = 60.0;
+  static const double _reportCardWidth = 1160.0;
+  static const double _footerBottomPadding = 54.0;
+
   Future<GeneratedReport> generate({
     required String sourceImagePath,
     required AnalysisResult result,
     required PublicModelProfile publicProfile,
     required Directory reportsDirectory,
+    String? displayFileName,
   }) async {
     await reportsDirectory.create(recursive: true);
-    final fileName = 'report_${_safeKey(result.analysisFingerprint)}.png';
+    final fileName = 'report_v3_${_safeKey(result.analysisFingerprint)}.png';
     final outputFile = File('${reportsDirectory.path}/$fileName');
     if (await outputFile.exists()) {
       return GeneratedReport(path: outputFile.path, fileName: fileName);
@@ -35,16 +38,33 @@ class AnalysisReportService {
 
     final sourceImage = await _decodeImage(sourceImagePath);
     final recorder = ui.PictureRecorder();
-    const width = 1280.0;
-    const height = 1680.0;
-    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, width, height));
+    const width = _reportWidth;
+    final assessmentLayout = _buildAssessmentLayout(result);
+    final explanationLayout = _buildExplanationLayout(
+      result.explanation,
+      startY: assessmentLayout.bottom + 38,
+    );
+    final footerLayout = _buildFooterLayout(
+      publicProfile,
+      result,
+      startY: explanationLayout.bottom + 52,
+    );
+    final height = footerLayout.bottom + _footerBottomPadding;
+    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, width, height));
 
     _drawBackground(canvas, width, height);
     _drawHeader(canvas, width, publicProfile);
-    _drawImagePreview(canvas, sourceImage, width, p.basename(sourceImagePath));
-    _drawAssessment(canvas, width, result);
-    _drawExplanation(canvas, width, result);
-    _drawFooter(canvas, width, publicProfile, result);
+    _drawImagePreview(
+      canvas,
+      sourceImage,
+      width,
+      (displayFileName?.trim().isNotEmpty ?? false)
+          ? displayFileName!.trim()
+          : p.basename(sourceImagePath),
+    );
+    _drawAssessment(canvas, assessmentLayout, result);
+    _drawExplanation(canvas, explanationLayout);
+    _drawFooter(canvas, footerLayout);
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(width.toInt(), height.toInt());
@@ -75,8 +95,16 @@ class AnalysisReportService {
     canvas.drawRect(Rect.fromLTWH(0, 0, width, height), background);
   }
 
-  void _drawHeader(Canvas canvas, double width, PublicModelProfile publicProfile) {
-    _drawRoundedCard(canvas, const Rect.fromLTWH(60, 56, 1160, 210), const Color(0xFF08202B));
+  void _drawHeader(
+    Canvas canvas,
+    double width,
+    PublicModelProfile publicProfile,
+  ) {
+    _drawRoundedCard(
+      canvas,
+      const Rect.fromLTWH(60, 56, 1160, 210),
+      const Color(0xFF08202B),
+    );
     _drawText(
       canvas,
       'AI Authenticity',
@@ -98,20 +126,28 @@ class AnalysisReportService {
         fontWeight: FontWeight.w500,
       ),
     );
-    _drawPill(
+    _drawAdaptivePill(
       canvas,
       text: '${publicProfile.name} · ${publicProfile.version}',
-      x: 760,
-      y: 156,
-      width: 380,
+      right: width - 80,
+      y: 150,
+      maxWidth: 480,
     );
   }
 
-  void _drawImagePreview(Canvas canvas, ui.Image? image, double width, String fileName) {
-    const previewRect = Rect.fromLTWH(60, 310, 1160, 620);
+  void _drawImagePreview(
+    Canvas canvas,
+    ui.Image? image,
+    double width,
+    String fileName,
+  ) {
+    const previewRect = Rect.fromLTWH(60, 310, 1160, 648);
     _drawRoundedCard(canvas, previewRect, Colors.white);
-    final imageRect = Rect.fromLTWH(92, 342, 1096, 556);
-    final clipRRect = RRect.fromRectAndRadius(imageRect, const Radius.circular(34));
+    final imageRect = Rect.fromLTWH(92, 342, 1096, 560);
+    final clipRRect = RRect.fromRectAndRadius(
+      imageRect,
+      const Radius.circular(34),
+    );
     canvas.save();
     canvas.clipRRect(clipRRect);
     if (image != null) {
@@ -139,94 +175,214 @@ class AnalysisReportService {
     _drawText(
       canvas,
       fileName,
-      const Offset(98, 904),
+      const Offset(98, 920),
       const TextStyle(
         color: Color(0xFF617384),
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: FontWeight.w700,
       ),
       maxWidth: 1090,
+      maxLines: 1,
+      ellipsis: '...',
     );
   }
 
-  void _drawAssessment(Canvas canvas, double width, AnalysisResult result) {
-    final accent = _accentFor(result.decisionCode);
-    _drawRoundedCard(canvas, const Rect.fromLTWH(60, 970, 1160, 268), Colors.white);
+  _AssessmentLayout _buildAssessmentLayout(AnalysisResult result) {
+    const top = 986.0;
+    const titleOffset = Offset(100, 1034);
+    const decisionOffset = Offset(100, 1080);
+    const confidenceGap = 16.0;
+    const summaryGap = 18.0;
+    final decisionPainter = _buildTextPainter(
+      result.decisionLabel,
+      TextStyle(
+        color: _accentFor(result.decisionCode),
+        fontSize: 54,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -1.1,
+      ),
+      maxWidth: 700,
+    );
+    final confidencePainter = _buildTextPainter(
+      '${result.aiProbability.toStringAsFixed(1)}% confidence',
+      const TextStyle(
+        color: Color(0xFF1E728F),
+        fontSize: 34,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+    final summaryPainter = _buildTextPainter(
+      _summaryFor(result.decisionCode),
+      const TextStyle(
+        color: Color(0xFF536677),
+        fontSize: 28,
+        fontWeight: FontWeight.w500,
+        height: 1.35,
+      ),
+      maxWidth: 940,
+    );
+    final confidenceY =
+        decisionOffset.dy + decisionPainter.height + confidenceGap;
+    final summaryY = confidenceY + confidencePainter.height + summaryGap;
+    final contentBottom = summaryY + summaryPainter.height;
+    final height = (contentBottom - top) + 44;
+    return _AssessmentLayout(
+      top: top,
+      height: height,
+      decisionPainter: decisionPainter,
+      confidencePainter: confidencePainter,
+      summaryPainter: summaryPainter,
+      titleOffset: titleOffset,
+      decisionOffset: decisionOffset,
+      confidenceOffset: Offset(100, confidenceY),
+      summaryOffset: Offset(100, summaryY),
+      pillRect: const Rect.fromLTWH(846, 1028, 274, 56),
+    );
+  }
+
+  void _drawAssessment(
+    Canvas canvas,
+    _AssessmentLayout layout,
+    AnalysisResult result,
+  ) {
+    _drawRoundedCard(
+      canvas,
+      Rect.fromLTWH(
+        _reportSidePadding,
+        layout.top,
+        _reportCardWidth,
+        layout.height,
+      ),
+      Colors.white,
+    );
     _drawText(
       canvas,
       'Assessment',
-      const Offset(100, 1020),
-      const TextStyle(color: Color(0xFF6D7F8F), fontSize: 26, fontWeight: FontWeight.w600),
+      layout.titleOffset,
+      const TextStyle(
+        color: Color(0xFF6D7F8F),
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+      ),
     );
-    _drawText(
-      canvas,
-      result.decisionLabel,
-      const Offset(100, 1066),
-      TextStyle(color: accent, fontSize: 54, fontWeight: FontWeight.w800, letterSpacing: -1.1),
-      maxWidth: 720,
-    );
-    _drawText(
-      canvas,
-      '${result.aiProbability.toStringAsFixed(1)}% confidence',
-      const Offset(100, 1138),
-      const TextStyle(color: Color(0xFF1E728F), fontSize: 34, fontWeight: FontWeight.w700),
-    );
+    layout.decisionPainter.paint(canvas, layout.decisionOffset);
+    layout.confidencePainter.paint(canvas, layout.confidenceOffset);
     _drawPill(
       canvas,
       text: 'Analyzed on-device',
-      x: 870,
-      y: 1020,
-      width: 250,
+      x: layout.pillRect.left,
+      y: layout.pillRect.top,
+      width: layout.pillRect.width,
       fill: const Color(0xFFE8F5EE),
       foreground: const Color(0xFF0C8A63),
     );
-    _drawText(
-      canvas,
-      _summaryFor(result.decisionCode),
-      const Offset(100, 1188),
-      const TextStyle(color: Color(0xFF536677), fontSize: 28, fontWeight: FontWeight.w500, height: 1.35),
-      maxWidth: 980,
+    layout.summaryPainter.paint(canvas, layout.summaryOffset);
+  }
+
+  _ExplanationLayout _buildExplanationLayout(
+    String explanation, {
+    required double startY,
+  }) {
+    final titleOffset = Offset(100, startY + 44);
+    final bodyOffset = Offset(100, startY + 88);
+    final bodyPainter = _buildTextPainter(
+      explanation,
+      const TextStyle(
+        color: Color(0xFF213140),
+        fontSize: 33,
+        fontWeight: FontWeight.w500,
+        height: 1.38,
+      ),
+      maxWidth: 1030,
+    );
+    final height = (bodyOffset.dy + bodyPainter.height - startY) + 42;
+    return _ExplanationLayout(
+      top: startY,
+      height: height,
+      titleOffset: titleOffset,
+      bodyOffset: bodyOffset,
+      bodyPainter: bodyPainter,
     );
   }
 
-  void _drawExplanation(Canvas canvas, double width, AnalysisResult result) {
-    _drawRoundedCard(canvas, const Rect.fromLTWH(60, 1278, 1160, 252), const Color(0xFFF8FBFD));
+  void _drawExplanation(Canvas canvas, _ExplanationLayout layout) {
+    _drawRoundedCard(
+      canvas,
+      Rect.fromLTWH(
+        _reportSidePadding,
+        layout.top,
+        _reportCardWidth,
+        layout.height,
+      ),
+      const Color(0xFFF8FBFD),
+    );
     _drawText(
       canvas,
       'Summary',
-      const Offset(100, 1324),
-      const TextStyle(color: Color(0xFF617384), fontSize: 24, fontWeight: FontWeight.w700),
+      layout.titleOffset,
+      const TextStyle(
+        color: Color(0xFF617384),
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+      ),
     );
-    _drawText(
-      canvas,
-      result.explanation,
-      const Offset(100, 1368),
-      const TextStyle(color: Color(0xFF213140), fontSize: 33, fontWeight: FontWeight.w500, height: 1.38),
-      maxWidth: 1030,
+    layout.bodyPainter.paint(canvas, layout.bodyOffset);
+  }
+
+  _FooterLayout _buildFooterLayout(
+    PublicModelProfile publicProfile,
+    AnalysisResult result, {
+    required double startY,
+  }) {
+    final headlinePainter = _buildTextPainter(
+      'AI Authenticity · ${publicProfile.name} ${publicProfile.version} · Mark ${publicProfile.signature}',
+      const TextStyle(
+        color: Color(0xFF738596),
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+      ),
+      maxWidth: 1100,
+    );
+    final fingerprintPainter = _buildTextPainter(
+      'Forensic fingerprint ${_publicFingerprint(result, publicProfile)}',
+      const TextStyle(
+        color: Color(0xFF738596),
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+      ),
+      maxWidth: 1100,
+    );
+    final disclaimerPainter = _buildTextPainter(
+      'This card summarizes a local device analysis result and is not a certification of origin.',
+      const TextStyle(
+        color: Color(0xFF8393A2),
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+      ),
+      maxWidth: 1100,
+    );
+    final headlineOffset = Offset(80, startY);
+    final fingerprintOffset = Offset(80, startY + headlinePainter.height + 10);
+    final disclaimerOffset = Offset(
+      80,
+      fingerprintOffset.dy + fingerprintPainter.height + 10,
+    );
+    final bottom = disclaimerOffset.dy + disclaimerPainter.height;
+    return _FooterLayout(
+      headlinePainter: headlinePainter,
+      headlineOffset: headlineOffset,
+      fingerprintPainter: fingerprintPainter,
+      fingerprintOffset: fingerprintOffset,
+      disclaimerPainter: disclaimerPainter,
+      disclaimerOffset: disclaimerOffset,
+      bottom: bottom,
     );
   }
 
-  void _drawFooter(Canvas canvas, double width, PublicModelProfile publicProfile, AnalysisResult result) {
-    _drawText(
-      canvas,
-      'AI Authenticity · ${publicProfile.name} ${publicProfile.version} · Mark ${publicProfile.signature}',
-      const Offset(80, 1598),
-      const TextStyle(color: Color(0xFF738596), fontSize: 22, fontWeight: FontWeight.w600),
-      maxWidth: 1100,
-    );
-    _drawText(
-      canvas,
-      'Forensic fingerprint ${_publicFingerprint(result, publicProfile)}',
-      const Offset(80, 1630),
-      const TextStyle(color: Color(0xFF738596), fontSize: 18, fontWeight: FontWeight.w700),
-    );
-    _drawText(
-      canvas,
-      'This card summarizes a local device analysis result and is not a certification of origin.',
-      const Offset(80, 1658),
-      const TextStyle(color: Color(0xFF8393A2), fontSize: 18, fontWeight: FontWeight.w500),
-      maxWidth: 1100,
-    );
+  void _drawFooter(Canvas canvas, _FooterLayout layout) {
+    layout.headlinePainter.paint(canvas, layout.headlineOffset);
+    layout.fingerprintPainter.paint(canvas, layout.fingerprintOffset);
+    layout.disclaimerPainter.paint(canvas, layout.disclaimerOffset);
   }
 
   void _drawRoundedCard(Canvas canvas, Rect rect, Color color) {
@@ -246,7 +402,10 @@ class AnalysisReportService {
     Color fill = const Color(0x1FFFFFFF),
     Color foreground = Colors.white,
   }) {
-    final rect = RRect.fromRectAndRadius(Rect.fromLTWH(x, y, width, 56), const Radius.circular(999));
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(x, y, width, 56),
+      const Radius.circular(999),
+    );
     final paint = Paint()..color = fill;
     canvas.drawRRect(rect, paint);
     _drawText(
@@ -258,17 +417,65 @@ class AnalysisReportService {
     );
   }
 
+  void _drawAdaptivePill(
+    Canvas canvas, {
+    required String text,
+    required double right,
+    required double y,
+    required double maxWidth,
+    Color fill = const Color(0x1FFFFFFF),
+    Color foreground = Colors.white,
+  }) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: foreground,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '...',
+    )..layout(maxWidth: maxWidth - 44);
+    final width = (painter.width + 44).clamp(180.0, maxWidth);
+    _drawPill(
+      canvas,
+      text: text,
+      x: right - width,
+      y: y,
+      width: width,
+      fill: fill,
+      foreground: foreground,
+    );
+  }
+
+  TextPainter _buildTextPainter(
+    String text,
+    TextStyle style, {
+    double? maxWidth,
+  }) {
+    return TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: ui.TextDirection.ltr,
+    )..layout(maxWidth: maxWidth ?? double.infinity);
+  }
+
   void _drawText(
     Canvas canvas,
     String text,
     Offset offset,
     TextStyle style, {
     double? maxWidth,
+    int? maxLines,
+    String? ellipsis,
   }) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: ui.TextDirection.ltr,
-      maxLines: maxWidth == null ? 1 : null,
+      maxLines: maxLines ?? (maxWidth == null ? 1 : null),
+      ellipsis: ellipsis,
     )..layout(maxWidth: maxWidth ?? double.infinity);
     painter.paint(canvas, offset);
   }
@@ -301,16 +508,92 @@ class AnalysisReportService {
 
   String _safeKey(String input) {
     final normalized = input.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_');
-    return normalized.isEmpty ? 'analysis' : normalized.substring(0, normalized.length > 40 ? 40 : normalized.length);
+    return normalized.isEmpty
+        ? 'analysis'
+        : normalized.substring(
+            0,
+            normalized.length > 40 ? 40 : normalized.length,
+          );
   }
 
-  String _publicFingerprint(AnalysisResult result, PublicModelProfile publicProfile) {
+  String _publicFingerprint(
+    AnalysisResult result,
+    PublicModelProfile publicProfile,
+  ) {
     final raw = result.analysisFingerprint;
     if (raw.isEmpty) {
       return '${publicProfile.signature}-PENDING';
     }
     final digest = raw.contains('::') ? raw.split('::').last : raw;
-    final suffix = digest.length <= 8 ? digest : digest.substring(digest.length - 8);
+    final suffix = digest.length <= 8
+        ? digest
+        : digest.substring(digest.length - 8);
     return '${publicProfile.signature}-${suffix.toUpperCase()}';
   }
+}
+
+class _AssessmentLayout {
+  const _AssessmentLayout({
+    required this.top,
+    required this.height,
+    required this.decisionPainter,
+    required this.confidencePainter,
+    required this.summaryPainter,
+    required this.titleOffset,
+    required this.decisionOffset,
+    required this.confidenceOffset,
+    required this.summaryOffset,
+    required this.pillRect,
+  });
+
+  final double top;
+  final double height;
+  final TextPainter decisionPainter;
+  final TextPainter confidencePainter;
+  final TextPainter summaryPainter;
+  final Offset titleOffset;
+  final Offset decisionOffset;
+  final Offset confidenceOffset;
+  final Offset summaryOffset;
+  final Rect pillRect;
+
+  double get bottom => top + height;
+}
+
+class _ExplanationLayout {
+  const _ExplanationLayout({
+    required this.top,
+    required this.height,
+    required this.titleOffset,
+    required this.bodyOffset,
+    required this.bodyPainter,
+  });
+
+  final double top;
+  final double height;
+  final Offset titleOffset;
+  final Offset bodyOffset;
+  final TextPainter bodyPainter;
+
+  double get bottom => top + height;
+}
+
+class _FooterLayout {
+  const _FooterLayout({
+    required this.headlinePainter,
+    required this.headlineOffset,
+    required this.fingerprintPainter,
+    required this.fingerprintOffset,
+    required this.disclaimerPainter,
+    required this.disclaimerOffset,
+    required this.bottom,
+  });
+
+  final TextPainter headlinePainter;
+  final Offset headlineOffset;
+  final TextPainter fingerprintPainter;
+  final Offset fingerprintOffset;
+  final TextPainter disclaimerPainter;
+  final Offset disclaimerOffset;
+  final double bottom;
 }

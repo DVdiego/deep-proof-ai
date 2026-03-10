@@ -47,4 +47,8 @@ class ReviewQueueRepository {
     entries.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return entries;
   }
+
+  Future<void> clearAll() async {
+    await store.writeQueuedReportEntries(const <ReportQueueEntry>[]);
+  }
 }

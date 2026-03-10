@@ -50,4 +50,14 @@ class ReportHistoryRepository {
     }
     return sorted;
   }
+
+  Future<void> remove(ReportHistoryEntry entry) async {
+    final entries = await store.readReportEntries();
+    final filtered = entries.where((item) => item.entryId != entry.entryId).toList(growable: false);
+    await store.writeReportEntries(filtered);
+  }
+
+  Future<void> clearAll() async {
+    await store.writeReportEntries(const <ReportHistoryEntry>[]);
+  }
 }
