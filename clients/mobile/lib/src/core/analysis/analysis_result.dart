@@ -27,6 +27,36 @@ class AnalysisResult {
   final String errorMessage;
   final List<double> features;
 
+  AnalysisResult copyWith({
+    bool? ok,
+    double? rawScore,
+    double? aiProbability,
+    String? analysisFingerprint,
+    String? decisionCode,
+    String? decisionLabel,
+    String? explanation,
+    String? modelVersion,
+    String? schemaVersion,
+    String? errorCode,
+    String? errorMessage,
+    List<double>? features,
+  }) {
+    return AnalysisResult(
+      ok: ok ?? this.ok,
+      rawScore: rawScore ?? this.rawScore,
+      aiProbability: aiProbability ?? this.aiProbability,
+      analysisFingerprint: analysisFingerprint ?? this.analysisFingerprint,
+      decisionCode: decisionCode ?? this.decisionCode,
+      decisionLabel: decisionLabel ?? this.decisionLabel,
+      explanation: explanation ?? this.explanation,
+      modelVersion: modelVersion ?? this.modelVersion,
+      schemaVersion: schemaVersion ?? this.schemaVersion,
+      errorCode: errorCode ?? this.errorCode,
+      errorMessage: errorMessage ?? this.errorMessage,
+      features: features ?? this.features,
+    );
+  }
+
   factory AnalysisResult.fromJson(Map<String, dynamic> json) {
     final rawScore = (json['rawScore'] ?? json['raw_score'] ?? 0) as num;
     final aiProbability = (json['aiProbability'] ?? json['ai_probability'] ?? 0) as num;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../analysis/analysis_result.dart';
+import '../analysis/visible_classification.dart';
 import '../model_package/model_package.dart';
 
 class GeneratedReport {
@@ -188,15 +189,18 @@ class AnalysisReportService {
   }
 
   _AssessmentLayout _buildAssessmentLayout(AnalysisResult result) {
+    final classification = VisibleAnalysisClassification.fromProbability(
+      result.aiProbability,
+    );
     const top = 986.0;
     const titleOffset = Offset(100, 1034);
     const decisionOffset = Offset(100, 1080);
     const confidenceGap = 16.0;
     const summaryGap = 18.0;
     final decisionPainter = _buildTextPainter(
-      result.decisionLabel,
+      classification.label,
       TextStyle(
-        color: _accentFor(result.decisionCode),
+        color: classification.accent,
         fontSize: 54,
         fontWeight: FontWeight.w800,
         letterSpacing: -1.1,
@@ -212,7 +216,7 @@ class AnalysisReportService {
       ),
     );
     final summaryPainter = _buildTextPainter(
-      _summaryFor(result.decisionCode),
+      classification.reportSummary,
       const TextStyle(
         color: Color(0xFF536677),
         fontSize: 28,
@@ -478,32 +482,6 @@ class AnalysisReportService {
       ellipsis: ellipsis,
     )..layout(maxWidth: maxWidth ?? double.infinity);
     painter.paint(canvas, offset);
-  }
-
-  Color _accentFor(String decisionCode) {
-    switch (decisionCode) {
-      case 'RealLikely':
-        return const Color(0xFF0C8A63);
-      case 'AIHigh':
-        return const Color(0xFFB04354);
-      case 'AILikely':
-        return const Color(0xFF9E6B0A);
-      default:
-        return const Color(0xFF0B698C);
-    }
-  }
-
-  String _summaryFor(String decisionCode) {
-    switch (decisionCode) {
-      case 'RealLikely':
-        return 'The image aligns with patterns usually found in authentic camera captures.';
-      case 'AIHigh':
-        return 'The image shows strong patterns commonly associated with AI-generated media.';
-      case 'AILikely':
-        return 'The image shows notable signs of AI generation and should be treated carefully.';
-      default:
-        return 'The result remains mixed. Manual review is recommended before relying on it.';
-    }
   }
 
   String _safeKey(String input) {

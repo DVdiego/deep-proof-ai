@@ -27,6 +27,7 @@ The project is moving from definition into implementation planning with the stac
 
 ## Quick Commands
 - `make ios-dev`: run on a connected physical iPhone in development mode with safe local purchase mocks
+- `make ios-profile`: run on a connected physical iPhone in profile mode, closer to real device behavior and forcing the real store path
 - `make ios-store`: run on a connected physical iPhone while forcing the real store flow in debug
 - `make ios-release`: build a release IPA, requires `SUPABASE_ANON_KEY`
 - `make macos-dev`: run the macOS development host

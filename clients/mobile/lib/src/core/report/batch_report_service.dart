@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../batch/review_batch.dart';
+import '../analysis/visible_classification.dart';
 import '../model_package/model_package.dart';
 import 'analysis_report_service.dart';
 
@@ -25,7 +26,7 @@ class BatchReportService {
 
     final summaryText =
         'This case groups ${batch.completedCount} completed analyses out of ${batch.totalCount} selected images. '
-        '${batch.authenticCount} look likely authentic, ${batch.needsReviewCount} need closer review and ${batch.aiCount} show stronger AI indicators.';
+        '${batch.authenticCount} look likely real, ${batch.needsReviewCount} remain mixed or need review, and ${batch.aiCount} show clear AI indicators.';
     final priorityItems = items
         .where((item) => item.isPriority)
         .take(8)
@@ -43,7 +44,7 @@ class BatchReportService {
     final priorityPainters = priorityItems
         .map(
           (item) => _painter(
-            '• ${item.fileName} — ${item.decisionLabel}${item.priorityReason.isNotEmpty ? ' · ${item.priorityReason}' : ''}',
+            '• ${item.fileName} — ${VisibleAnalysisClassification.fromProbability(item.aiProbability).label}${item.priorityReason.isNotEmpty ? ' · ${item.priorityReason}' : ''}',
             const TextStyle(
               color: Color(0xFF385062),
               fontSize: 24,
@@ -180,9 +181,9 @@ class BatchReportService {
       maxWidth: 900,
     );
     final chips = [
-      '${batch.authenticCount} authentic',
+      '${batch.authenticCount} likely real',
       '${batch.needsReviewCount} need review',
-      '${batch.aiCount} AI',
+      '${batch.aiCount} likely AI',
       '${batch.priorityCount} priority',
     ];
     var x = 100.0;
