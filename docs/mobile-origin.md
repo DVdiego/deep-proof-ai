@@ -24,3 +24,10 @@ Mobile app for local image authenticity analysis.
 
 ## Current Phase
 The project is moving from definition into implementation planning with the stack now fixed.
+
+## Quick Commands
+- `make ios-dev`: run on a connected physical iPhone in development mode with safe local purchase mocks
+- `make ios-store`: run on a connected physical iPhone while forcing the real store flow in debug
+- `make ios-release`: build a release IPA, requires `SUPABASE_ANON_KEY`
+- `make macos-dev`: run the macOS development host
+- `make ios-sim-dev`: run the iOS simulator development host
