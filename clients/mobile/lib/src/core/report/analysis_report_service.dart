@@ -108,7 +108,7 @@ class AnalysisReportService {
     );
     _drawText(
       canvas,
-      'AI Authenticity',
+      'DeepProof AI',
       const Offset(100, 96),
       const TextStyle(
         color: Colors.white,
@@ -339,7 +339,7 @@ class AnalysisReportService {
     required double startY,
   }) {
     final headlinePainter = _buildTextPainter(
-      'AI Authenticity · ${publicProfile.name} ${publicProfile.version} · Mark ${publicProfile.signature}',
+      'DeepProof AI · ${publicProfile.name} ${publicProfile.version} · Mark ${publicProfile.signature}',
       const TextStyle(
         color: Color(0xFF738596),
         fontSize: 22,
@@ -486,12 +486,14 @@ class AnalysisReportService {
 
   String _safeKey(String input) {
     final normalized = input.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_');
-    return normalized.isEmpty
-        ? 'analysis'
-        : normalized.substring(
-            0,
-            normalized.length > 40 ? 40 : normalized.length,
-          );
+    if (normalized.isEmpty) return 'analysis';
+    // Use up to 200 chars — enough to include both model hash and image hash
+    // from a fingerprint of the form "<model_sha256>__<image_sha256>" (129 chars).
+    // Truncating to 40 was causing all images to share the same filename prefix
+    // (identical model hash), which collapsed all reports into one.
+    return normalized.length > 200
+        ? normalized.substring(0, 200)
+        : normalized;
   }
 
   String _publicFingerprint(

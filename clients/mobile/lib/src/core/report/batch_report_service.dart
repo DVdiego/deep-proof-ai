@@ -67,7 +67,7 @@ class BatchReportService {
         (priorityItems.isEmpty ? 40 : 22);
     final footerTop = 1044 + priorityCardHeight + 54;
     final footerPainter = _painter(
-      'AI Authenticity · ${publicProfile.name} ${publicProfile.version} · Batch summary',
+      'DeepProof AI · ${publicProfile.name} ${publicProfile.version} · Batch summary',
       const TextStyle(
         color: Color(0xFF738596),
         fontSize: 22,
@@ -128,7 +128,7 @@ class BatchReportService {
     );
     _drawText(
       canvas,
-      'AI Authenticity',
+      'DeepProof AI',
       const Offset(100, 100),
       const TextStyle(
         color: Colors.white,

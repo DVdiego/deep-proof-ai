@@ -1,6 +1,6 @@
-# ai-authenticity-mobile
+# DeepProof AI
 
-Mobile app for local image authenticity analysis.
+Mobile app for local media authenticity review.
 
 ## Current Scope
 - Image analysis only in v1
@@ -23,12 +23,17 @@ Mobile app for local image authenticity analysis.
 - `tools/`: support scripts for packaging and validation
 
 ## Current Phase
-The project is moving from definition into implementation planning with the stack now fixed.
+The project is in product-hardening: branding, recoverable auth, provenance-aware analysis, and real-store purchase readiness.
 
 ## Quick Commands
-- `make ios-dev`: run on a connected physical iPhone in development mode with safe local purchase mocks
-- `make ios-profile`: run on a connected physical iPhone in profile mode, closer to real device behavior and forcing the real store path
+- `make ios-dev`: run on a connected physical iPhone in development mode against the real backend and current store wiring
+- `make ios-profile`: run on a connected physical iPhone in profile mode, closer to real device behavior and the real store path
 - `make ios-store`: run on a connected physical iPhone while forcing the real store flow in debug
 - `make ios-release`: build a release IPA, requires `SUPABASE_ANON_KEY`
 - `make macos-dev`: run the macOS development host
 - `make ios-sim-dev`: run the iOS simulator development host
+
+## Product notes
+- Visible brand name: `DeepProof AI`
+- Recoverable premium path: link Apple or Google before purchasing on store-backed builds
+- Backend entitlement overrides remain available for internal testing, but premium UX should follow the same recoverable-account rules as production
