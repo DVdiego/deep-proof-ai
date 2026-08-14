@@ -1,0 +1,12 @@
+{
+  "media_id": "sample-001",
+  "declared_mime": "video/mp4",
+  "container": "mp4",
+  "codec": "h264",
+  "has_creation_timestamp": false,
+  "encoder": "synthetic export pipeline",
+  "duplicate_frame_ratio": 0.62,
+  "timestamp_jitter": 0.41,
+  "face_boundary_artifact_score": 0.83,
+  "frequency_anomaly_score": 0.74
+}
