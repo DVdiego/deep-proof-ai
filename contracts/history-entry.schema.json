@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-authenticity-mobile/history-entry.schema.json",
+  "title": "HistoryEntry",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["entry_type", "entry_id", "file_name", "timestamp", "decision_label", "ai_probability", "model_version", "schema_version"],
+      "properties": {
+        "entry_type": {"const": "execute"},
+        "entry_id": {"type": "string"},
+        "file_name": {"type": "string"},
+        "file_path": {"type": "string"},
+        "timestamp": {"type": "string"},
+        "decision_label": {"type": "string"},
+        "ai_probability": {"type": "number"},
+        "model_version": {"type": "string"},
+        "schema_version": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "required": ["entry_type", "entry_id", "file_name", "timestamp", "primary_model_version", "secondary_model_version", "primary_probability", "secondary_probability", "delta_probability", "schema_version"],
+      "properties": {
+        "entry_type": {"const": "compare"},
+        "entry_id": {"type": "string"},
+        "file_name": {"type": "string"},
+        "timestamp": {"type": "string"},
+        "primary_model_version": {"type": "string"},
+        "secondary_model_version": {"type": "string"},
+        "primary_probability": {"type": "number"},
+        "secondary_probability": {"type": "number"},
+        "delta_probability": {"type": "number"},
+        "schema_version": {"type": "string"}
+      },
+      "additionalProperties": true
+    }
+  ]
+}
